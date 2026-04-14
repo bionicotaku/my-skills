@@ -1,6 +1,6 @@
 ---
 name: assemblyai-transcript
-description: Upload local audio files to AssemblyAI for transcription, poll until completion, and save the transcript markdown to `~/Downloads` by default using the source audio filename unless the output path, directory, or name is overridden. Use when a workflow needs a hosted speech-to-text fallback to replace OpenAI Whisper API style audio upload transcription, without any extra Python package dependencies.
+description: Transcribe a local audio file with AssemblyAI and save the result as a markdown transcript. Use when a workflow needs hosted speech-to-text for local audio, especially as a fallback when subtitles or other transcript sources are unavailable. Input is a local audio path; output is a markdown file in `~/Downloads` by default unless overridden.
 metadata:
   {
     "openclaw": {

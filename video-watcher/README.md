@@ -1,80 +1,46 @@
 # Video Watcher
 
-Universal transcript fetcher for **YouTube** and **Bilibili** videos.
+这是我自己在本地用的一个视频 transcript skill，主要处理 YouTube 和 Bilibili。优先抓平台现成字幕，抓不到时再下载音频并调用同仓库里的 `assemblyai-transcript` 做转写。
 
-## Features
+## 这个 skill 做什么
 
-- ✅ **YouTube Support** - youtube.com, youtu.be
-- ✅ **Bilibili Support** - bilibili.com, b23.tv
-- ✅ **Auto Platform Detection** - Automatically identifies video platform from URL
-- ✅ **Smart Subtitle Language Defaults** - zh-CN for Bilibili, en for YouTube
-- ✅ **AssemblyAI Fallback** - Audio transcription is delegated to the sibling `assemblyai-transcript` skill
-- ✅ **ASR Auto-Detect** - AssemblyAI fallback detects language automatically
-- ✅ **Custom Subtitle Language** - Override subtitle lookup with `--lang`
-- ✅ **Dual Format** - Supports both VTT and SRT subtitle formats
+- 支持 YouTube 和 Bilibili 视频链接
+- 自动识别平台
+- 优先用 `yt-dlp` 抓字幕
+- 抓不到字幕时回退到音频下载 + `assemblyai-transcript`
+- 中间 transcript 统一写成同一个临时 `transcript.md`
+- 最终输出到 `~/Downloads`
+- 脚本只负责产出 draft，后续需要 agent 读取整份 markdown 做最后整理
 
-## Installation
+## 依赖
 
-### Prerequisites
+- `python3`
+- `yt-dlp`
+- sibling skill：`assemblyai-transcript`
+- `ASSEMBLYAI_API_KEY`
 
-Install [yt-dlp](https://github.com/yt-dlp/yt-dlp):
+## 基本流程
 
-```bash
-# macOS
-brew install yt-dlp
+1. 识别是 YouTube 还是 Bilibili
+2. 先用 `yt-dlp` 抓字幕
+3. 如果有字幕，就清洗字幕内容并写入临时 `transcript.md`
+4. 如果没有字幕，就下载音频
+5. 把音频直接交给 `assemblyai-transcript`
+6. `assemblyai-transcript` 返回后，再统一整理成相同的中间 markdown 格式
+7. 根据视频标题把 draft markdown 输出到最终目录
+8. agent 再读取最终 markdown，补摘要、轻度清洗正文、调整文段边界，并覆盖原文件
 
-# Linux
-sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
-sudo chmod +x /usr/local/bin/yt-dlp
+## 语言逻辑
 
-# Python
-pip install yt-dlp
-```
+- 默认字幕语言：
+  - YouTube：`en`
+  - Bilibili：`zh-CN`
+- `--lang` 只影响字幕抓取偏好
+- 如果进入 AssemblyAI fallback，语言检测交给 AssemblyAI 自动处理
 
-This skill also depends on the sibling `assemblyai-transcript` skill and its `ASSEMBLYAI_API_KEY` configuration.
+## 中间文件格式
 
-### Install via ClawHub
-
-```bash
-clawhub install video-watcher
-```
-
-### Manual Installation
-
-1. Download this skill folder
-2. Place it in your OpenClaw workspace as `~/.openclaw/workspace/skills/video-watcher/`
-
-The folder name should remain `video-watcher`, because that is the published skill name.
-
-## Usage
-
-### Basic Usage (Auto-detect)
-
-```bash
-# YouTube
-python3 {baseDir}/scripts/get_transcript.py \
-  "https://www.youtube.com/watch?v=VIDEO_ID"
-
-# Bilibili
-python3 {baseDir}/scripts/get_transcript.py \
-  "https://www.bilibili.com/video/BVxxxxx"
-```
-
-### Specify Language
-
-```bash
-# Prefer English subtitles for a Bilibili video
-python3 scripts/get_transcript.py "https://bilibili.com/video/..." --lang en
-
-# Prefer Chinese subtitles for a YouTube video
-python3 scripts/get_transcript.py "https://youtube.com/watch?v=..." --lang zh-CN
-```
-
-`--lang` only affects subtitle lookup. If subtitles are unavailable and the script falls back to ASR, `video-watcher` calls the sibling `assemblyai-transcript` skill and AssemblyAI detects the spoken language automatically.
-
-The fallback downloads audio as-is and passes the resulting file directly to `assemblyai-transcript`. AssemblyAI decides whether the format is acceptable. The script does not transcode audio.
-
-Internally, both the cleaned `yt-dlp` subtitle path and the `assemblyai-transcript` fallback path now write to the same temporary `transcript.md` file before the final markdown is generated. That intermediate file uses a consistent structure:
+无论 transcript 来源于字幕还是 AssemblyAI，中间文件都统一成：
 
 ```markdown
 # Intermediate Transcript
@@ -89,21 +55,16 @@ Internally, both the cleaned `yt-dlp` subtitle path and the `assemblyai-transcri
 ...
 ```
 
-## Default Subtitle Languages
+## 最终文档结构
 
-| Platform | Default | Common Alternatives |
-|----------|---------|-------------------|
-| YouTube  | `en`    | `zh-CN`, `ja`, `es`, `fr` |
-| Bilibili | `zh-CN` | `en`, `zh-TW`, `ja` |
-
-## Output Format
+脚本输出应被视为 draft。这个 skill 的完整 workflow 要求 agent 读取最终输出目录中的 markdown，并覆盖成统一结构：
 
 ```markdown
 # <Video Title>
 
 ## 摘要
 
-- Concise summary bullets derived from the full document
+- 简洁摘要
 
 ## Metadata
 
@@ -117,41 +78,46 @@ Internally, both the cleaned `yt-dlp` subtitle path and the `assemblyai-transcri
 
 ## Transcript
 
-[Lightly cleaned transcript body with boundary-aware paragraph splits...]
+正文
 ```
 
-The script output should be treated as a draft. The skill requires the agent to reopen the saved markdown in the final output directory, read the whole document, lightly clean only the transcript body, split paragraphs where needed for readability, add the summary section, and overwrite the file in the standardized structure above. Overwriting the whole file is expected; the restriction is that the `## Transcript` content should only receive light local fixes and paragraph-boundary cleanup, not a full prose rewrite.
+注意：
 
-## Troubleshooting
+- 可以整文件覆盖写回
+- 但 `## Transcript` 正文只做轻度处理
+- 允许修正局部明显错误
+- 允许按自然边界切分文段
+- 不允许把整段 transcript 改写成另一版 prose
 
-### "yt-dlp not found"
-Install yt-dlp first (see Installation section).
+## 用法
 
-### "HTTP Error 412" (Bilibili)
-Your IP may be rate-limited. Solutions:
-1. Use cookies: `yt-dlp --cookies-from-browser chrome "URL"`
-2. Use proxy: `export HTTP_PROXY="http://proxy:port"`
-3. Wait and retry
+基础用法：
 
-### "No subtitles found"
-The video may not have subtitles available. The script will then fall back to ASR on the original downloaded audio file via `assemblyai-transcript`. If that still fails, try:
-- Check if the video has CC (closed captions)
-- Try different language: `--lang en` or `--lang zh-CN`
-- Verify `ASSEMBLYAI_API_KEY` is configured for the `assemblyai-transcript` skill
+```bash
+python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL"
+```
 
-### Final Cleanup Expectations
+指定字幕偏好语言：
 
-After the script finishes:
-1. Open the saved markdown file from the final output directory.
-2. Read the full document, not just the transcript section.
-3. Keep the transcript content intact except for light local fixes and paragraph boundary cleanup. Rewriting the file is fine; rewriting the `## Transcript` section as a new prose version is not.
-4. Add a concise summary section.
-5. Overwrite the same file using the standardized structure shown above.
+```bash
+python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --lang zh-CN
+```
 
-## License
+指定输出目录：
 
-MIT
+```bash
+python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --out-dir /path/to/output
+```
 
-## Credits
+## 适合的场景
 
-Adapted from [youtube-watcher](https://clawhub.ai/Michaelgathara/youtube-watcher) by Michael Gathara.
+- 想快速拿到视频 transcript
+- 想先用字幕，没字幕再自动 fallback
+- 想把最终文档标准化成可读的 markdown
+- 想让 transcript 和 summary 工作流统一
+
+## 相关文件
+
+- [SKILL.md](/Users/evan/Downloads/my-skills/video-watcher/SKILL.md)
+- [scripts/get_transcript.py](/Users/evan/Downloads/my-skills/video-watcher/scripts/get_transcript.py)
+- [../assemblyai-transcript/README.md](/Users/evan/Downloads/my-skills/assemblyai-transcript/README.md)

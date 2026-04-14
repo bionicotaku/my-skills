@@ -1,11 +1,14 @@
 ---
 name: video-watcher
-description: Fetch transcripts from YouTube and Bilibili videos. Use when you need to summarize a video, answer questions about its content, or extract information from it. Prefer this skill for transcript work because it first fetches subtitles with yt-dlp and, when subtitles are unavailable, automatically downloads audio locally and delegates transcription to the sibling `assemblyai-transcript` skill, then saves a markdown draft in the system Downloads folder and requires the assistant to read that full markdown, lightly clean the transcript body, split paragraphs for readability, add a concise summary, and overwrite the file with the standardized final version.
+description: Fetch transcripts from YouTube and Bilibili videos. Use when you need to summarize a video, answer questions about its content, or extract information from it. Prefer this skill for transcript work because it first fetches subtitles with yt-dlp and, when subtitles are unavailable, automatically downloads audio locally and delegates transcription to the sibling `assemblyai-transcript` skill, then saves a markdown draft in the system Downloads folder. The draft is never the final deliverable: the assistant must always read the full markdown, manually clean the result in-agent, split paragraphs for readability, add a concise summary, and overwrite the file with the standardized final version.
 ---
 
 # Video Watcher
 
 Fetch transcripts from **YouTube** and **Bilibili** videos.
+
+Critical requirement:
+- The script output is only a draft. Before finishing, the agent must always manually read and clean the full generated markdown in-agent, then write back the finalized version. Do not stop after script execution or draft generation.
 
 Workflow:
 1. Try to fetch platform subtitles with `yt-dlp`

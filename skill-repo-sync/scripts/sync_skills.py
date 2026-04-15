@@ -44,6 +44,12 @@ def stage_copy(source_skill: Path, destination_root: Path) -> Path:
     return staged_skill
 
 
+def remove_top_level_readme(skill_dir: Path) -> None:
+    for child in skill_dir.iterdir():
+        if child.is_file() and child.name.lower() == "readme.md":
+            child.unlink()
+
+
 def replace_skill(source_skill: Path, destination_root: Path) -> str:
     target_skill = destination_root / source_skill.name
     action = "update" if target_skill.exists() else "create"
@@ -56,6 +62,7 @@ def replace_skill(source_skill: Path, destination_root: Path) -> str:
     backup_skill = None
 
     try:
+        remove_top_level_readme(staged_skill)
         if target_skill.exists():
             backup_skill = destination_root / f".{source_skill.name}.backup-{uuid.uuid4().hex}"
             os.replace(target_skill, backup_skill)

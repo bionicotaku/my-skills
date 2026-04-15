@@ -1,6 +1,6 @@
 ---
 name: skill-repo-sync
-description: 将一个 skills 源目录中的 skills 同步到另一个 skills 目标目录中：输入源目录和目标目录的绝对路径，覆盖目标目录里同名的 skill 目录，并复制缺失的 skill，其他目标 skill 保持不变。适用于需要在两个本地 skills 目录之间做发布、镜像、刷新或更新的场景。
+description: 将一个 skills 源目录中的 skills 同步到另一个 skills 目标目录中：输入源目录和目标目录的绝对路径，覆盖目标目录里同名的 skill 目录，并复制缺失的 skill，其他目标 skill 保持不变。同步完成后，删除每个已同步目标 skill 顶层的 `README.md`。适用于需要在两个本地 skills 目录之间做发布、镜像、刷新或更新的场景。
 ---
 
 # Skill 仓库同步
@@ -26,6 +26,7 @@ python3 {baseDir}/scripts/sync_skills.py /absolute/path/to/source-skills /absolu
 - 对每个源 skill：
   - 如果目标中不存在，则创建该 skill
   - 如果目标中已经存在，则替换该目标 skill 目录
+- 每个已同步到目标目录的 skill 在完成复制或覆盖后，删除其顶层 `README.md`。
 - 目标目录中的其他 skill 保持不变。
 - 复制整个 skill 目录树，包括 `SKILL.md`、`scripts/`、`references/`、`assets/`、`agents/` 以及源 skill 目录里的其他文件。
 - 忽略常见本地垃圾文件，例如 `.DS_Store`、`__pycache__` 和 `*.pyc`。
@@ -36,6 +37,7 @@ python3 {baseDir}/scripts/sync_skills.py /absolute/path/to/source-skills /absolu
 - 要求源目录和目标目录都必须已经存在。
 - 拒绝把同一个目录同时作为源和目标使用。
 - 只替换那些在源目录中存在的同名 skill 目录。不要删除或修改目标目录中无关的其他 skill。
+- 只删除每个已同步目标 skill 顶层的 `README.md`，不要碰目标目录中无关 skill 的文档。
 - 优先使用内置脚本，不要临时改用 `cp` 或 `rsync` 等 shell 命令，以保持行为一致。
 
 ## 预演模式

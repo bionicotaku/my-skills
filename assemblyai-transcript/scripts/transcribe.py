@@ -63,7 +63,7 @@ def create_transcript(upload_url: str, api_key: str) -> str:
     payload = {
         "audio_url": upload_url,
         "language_detection": True,
-        "speech_models": ["universal-3-pro"],
+        "speech_models": ["universal-3-pro", "universal-2"],
     }
 
     headers = {

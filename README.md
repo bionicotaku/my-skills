@@ -23,8 +23,6 @@ my-skills/
 ├── skill-repo-sync/
 │   ├── README.md
 │   ├── SKILL.md
-│   ├── agents/
-│   │   └── openai.yaml
 │   └── scripts/
 │       └── sync_skills.py
 └── video-watcher/
@@ -57,13 +55,12 @@ my-skills/
 
 ### `skill-repo-sync`
 
-- 用途：把当前仓库中的 skill 同步到另一个 skills 目录
+- 用途：把一个源 skills 目录中的 skill 同步到另一个目标 skills 目录
 - 同步策略：同名 skill 覆盖更新，缺失 skill 自动复制，目标目录中其他 skill 保持不变
-- 特点：脚本会根据自身位置自动反推出源仓库根目录，因此调用时只需要传目标目录绝对路径
+- 特点：调用时显式传入源目录和目标目录的绝对路径，不再依赖脚本位置推导源目录
 - 入口：
   - [skill-repo-sync/README.md](./skill-repo-sync/README.md)
   - [skill-repo-sync/SKILL.md](./skill-repo-sync/SKILL.md)
-  - [skill-repo-sync/agents/openai.yaml](./skill-repo-sync/agents/openai.yaml)
   - [skill-repo-sync/scripts/sync_skills.py](./skill-repo-sync/scripts/sync_skills.py)
 
 ### `video-watcher`

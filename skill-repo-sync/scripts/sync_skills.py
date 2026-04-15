@@ -14,10 +14,6 @@ from pathlib import Path
 IGNORE_NAMES = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc", "*.pyo")
 
 
-def find_source_repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
 def discover_source_skills(repo_root: Path) -> list[Path]:
     skills = []
     for child in sorted(repo_root.iterdir(), key=lambda path: path.name):
@@ -28,19 +24,17 @@ def discover_source_skills(repo_root: Path) -> list[Path]:
     return skills
 
 
-def parse_destination(raw_path: str, source_repo_root: Path) -> Path:
+def parse_directory(raw_path: str, label: str) -> Path:
     expanded = Path(raw_path).expanduser()
     if not expanded.is_absolute():
-        raise ValueError("destination path must be absolute")
+        raise ValueError(f"{label} path must be absolute")
 
-    destination = expanded.resolve()
-    if not destination.exists():
-        raise ValueError(f"destination does not exist: {destination}")
-    if not destination.is_dir():
-        raise ValueError(f"destination is not a directory: {destination}")
-    if destination == source_repo_root:
-        raise ValueError("destination cannot be the source repository root")
-    return destination
+    directory = expanded.resolve()
+    if not directory.exists():
+        raise ValueError(f"{label} does not exist: {directory}")
+    if not directory.is_dir():
+        raise ValueError(f"{label} is not a directory: {directory}")
+    return directory
 
 
 def stage_copy(source_skill: Path, destination_root: Path) -> Path:
@@ -88,8 +82,9 @@ def build_plan(source_skills: list[Path], destination_root: Path) -> list[tuple[
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Sync the top-level skills from this repository into another skills directory.",
+        description="Sync the top-level skills from one skills repository into another skills directory.",
     )
+    parser.add_argument("source", help="Absolute path to the source skills repository")
     parser.add_argument("destination", help="Absolute path to the destination skills directory")
     parser.add_argument(
         "--dry-run",
@@ -98,11 +93,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    source_repo_root = find_source_repo_root()
     try:
-        destination_root = parse_destination(args.destination, source_repo_root)
+        source_repo_root = parse_directory(args.source, "source")
+        destination_root = parse_directory(args.destination, "destination")
     except ValueError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
+        return 1
+
+    if source_repo_root == destination_root:
+        print("[ERROR] source and destination cannot be the same directory", file=sys.stderr)
         return 1
 
     source_skills = discover_source_skills(source_repo_root)
@@ -112,7 +111,7 @@ def main() -> int:
 
     plan = build_plan(source_skills, destination_root)
 
-    print(f"source repo: {source_repo_root}")
+    print(f"source: {source_repo_root}")
     print(f"destination: {destination_root}")
 
     if args.dry_run:

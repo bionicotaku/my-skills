@@ -1,66 +1,66 @@
 ---
 name: video-watcher
-description: Fetch a transcript from a YouTube or Bilibili video and save it as markdown. Use when you need a video transcript for summarization, question answering, or information extraction. Input is a video URL; output is a markdown transcript file in `~/Downloads` by default, which this skill treats as a draft for final cleanup and formatting.
+description: 从 YouTube 或 Bilibili 视频中获取Speech-to-Text 转录文本。适用于你需要视频文稿来做摘要、问答或信息提取的场景。输入是视频 URL；输出 markdown 转录文件。
 ---
 
-# Video Watcher
+# 视频文稿提取
 
-Fetch transcripts from **YouTube** and **Bilibili** videos.
+从 **YouTube** 和 **Bilibili** 视频中获取转录文本。
 
-## Rules
+## 规则
 
-- The script output is only a draft. Do not stop after script execution.
-- Before finishing, always read the full saved markdown in-agent and overwrite it with the finalized version.
-- Only do light cleanup on the `## Transcript` body: fix obvious local errors and split paragraphs at sensible boundaries. Do not rewrite or paraphrase the transcript as new prose.
-- Keep subtitle, audio, and transcription intermediates inside a temporary directory only, and delete them after the final markdown is successfully written.
+- 脚本输出只是草稿。不要在脚本执行结束后就停止。
+- 结束前始终在 agent 内完整读取保存下来的 markdown，并用最终版本覆盖回去。
+- 只对 `## Transcript` 正文做轻量清理：修正明显局部错误，并在合理边界处拆分段落。不要把转录内容改写或转述成新的 prose。
+- 字幕、音频和转写中间产物都只能放在临时目录里，并在最终 markdown 成功写出后删除。
 
-## Workflow
+## 工作流
 
-1. Try to fetch platform subtitles with `yt-dlp`.
-2. If subtitles are unavailable, download audio locally and pass it to the sibling `assemblyai-transcript` skill.
-3. In either branch, write the intermediate result to the same temporary `transcript.md` path using this structure: `# Intermediate Transcript`, `## Metadata`, `## Transcript`.
-4. Save a draft markdown transcript to `~/Downloads` by default, naming the file from the video title.
-5. After the script finishes, read the entire generated markdown from the final output path.
-6. Add a concise summary and do a light cleanup pass on the transcript body only.
-7. Overwrite the same markdown file with this final structure:
-   title
-   summary
-   metadata
-   transcript body
-8. Clean up all intermediate temporary files and keep only the final markdown output.
+1. 先尝试用 `yt-dlp` 获取平台字幕。
+2. 如果没有字幕，就把音频下载到本地并交给同级的 `assemblyai-transcript` skill 处理。
+3. 无论走哪条分支，都把中间结果写到同一个临时 `transcript.md` 路径，结构使用：`# Intermediate Transcript`、`## Metadata`、`## Transcript`。
+4. 默认把 markdown 草稿保存到 `~/Downloads`，文件名取自视频标题。
+5. 脚本结束后，从最终输出路径读取完整生成结果。
+6. 添加简洁摘要，并且只对转录正文做一次轻量清理。
+7. 用以下最终结构覆盖写回同一个 markdown 文件：
+   标题
+   摘要
+   元数据
+   转录正文
+8. 清理所有中间临时文件，只保留最终 markdown 输出。
 
-## Usage
+## 用法
 
-### Get transcript with automatic fallback
+### 自动回退获取文稿
 
 ```bash
 python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL"
 ```
 
-### Specify language
+### 指定语言
 
 ```bash
 python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --lang zh-CN
 ```
 
-### Choose a different output folder
+### 选择其他输出目录
 
 ```bash
 python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --out-dir /path/to/output
 ```
 
-## Notes
+## 说明
 
-- Support YouTube and Bilibili URLs
-- Require `yt-dlp`
-- Require the sibling `assemblyai-transcript` skill at `../assemblyai-transcript/scripts/transcribe.py`
-- Require `ASSEMBLYAI_API_KEY` through the `assemblyai-transcript` dependency
-- `--lang` controls subtitle lookup preference; if subtitle fetch fails, the AssemblyAI fallback detects language automatically
-- The audio fallback passes the downloaded file directly to AssemblyAI and does not transcode it locally
-- Name files from the video title instead of appending the video id
-- Overwrite the same markdown file with the standardized final structure:
+- 支持 YouTube 和 Bilibili URL
+- 依赖 `yt-dlp`
+- 依赖同级 `assemblyai-transcript` skill，路径是 `../assemblyai-transcript/scripts/transcribe.py`
+- 通过 `assemblyai-transcript` 这层依赖要求提供 `ASSEMBLYAI_API_KEY`
+- `--lang` 用于控制字幕查找优先级；如果字幕获取失败，AssemblyAI 回退路径会自动识别语言
+- 音频回退路径会把下载下来的文件直接交给 AssemblyAI，不会在本地转码
+- 文件名取自视频标题，而不是附加视频 id
+- 用标准化的最终结构覆盖写回同一个 markdown 文件：
   `# <Title>`
   `## 摘要`
   `## Metadata`
   `## Transcript`
-- Default output directory: `~/Downloads`
+- 默认输出目录：`~/Downloads`

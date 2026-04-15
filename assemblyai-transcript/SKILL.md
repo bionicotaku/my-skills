@@ -1,71 +1,73 @@
 ---
 name: assemblyai-transcript
-description: Transcribe a local audio file with AssemblyAI and save the result as a markdown transcript. Use when a workflow needs hosted speech-to-text for local audio, especially as a fallback when subtitles or other transcript sources are unavailable. Input is a local audio path; output is a markdown file in `~/Downloads` by default unless overridden.
+description: 使用 AssemblyAI 转写本地音频文件，并将结果保存为 markdown 文稿。适用于工作流需要把本地音频 transcript 的场景。输入本地音频路径；输出 markdown 文件。
 metadata:
   {
-    "openclaw": {
-      "emoji": "📝",
-      "requires": { "bins": ["python3"], "env": ["ASSEMBLYAI_API_KEY"] },
-      "primaryEnv": "ASSEMBLYAI_API_KEY"
-    }
+    "openclaw":
+      {
+        "emoji": "📝",
+        "requires": { "bins": ["python3"], "env": ["ASSEMBLYAI_API_KEY"] },
+        "primaryEnv": "ASSEMBLYAI_API_KEY",
+      },
   }
 ---
 
-# AssemblyAI Transcript
+# AssemblyAI 音频转写
 
-Upload a local audio file to AssemblyAI, create a transcript job, poll until completion, and save transcript markdown locally using only Python standard library modules.
+把本地音频文件上传到 AssemblyAI，创建转写任务，轮询直到完成，并将转写结果保存为本地 markdown 文件。整个流程只依赖 Python 标准库模块。
 
-## When to use
+## 适用场景
 
-Use this skill when:
-- local subtitles are unavailable
-- you need hosted speech-to-text for an audio file
-- you want a replacement for the old Whisper API upload flow
+在以下情况下使用这个 skill：
 
-## Usage
+- 本地没有可用字幕
+- 你需要为某个音频文件使用托管语音转文本服务
+- 你想替代旧的 Whisper API 上传流程
 
-Basic:
+## 用法
+
+基本用法：
 
 ```bash
 python3 {baseDir}/scripts/transcribe.py /path/to/audio.m4a
 ```
 
-Save to a specific file:
+保存到指定文件：
 
 ```bash
 python3 {baseDir}/scripts/transcribe.py /path/to/audio.m4a --save /tmp/transcript.md
 ```
 
-Save to a different folder while keeping the default filename behavior:
+保持默认文件名规则，但改为保存到其他目录：
 
 ```bash
 python3 {baseDir}/scripts/transcribe.py /path/to/audio.m4a --out-dir /tmp
 ```
 
-Override just the output name:
+仅覆盖输出文件名：
 
 ```bash
 python3 {baseDir}/scripts/transcribe.py /path/to/audio.m4a --name meeting-notes
 ```
 
-Control polling interval:
+控制轮询间隔：
 
 ```bash
 python3 {baseDir}/scripts/transcribe.py /path/to/audio.m4a --interval 3
 ```
 
-## Output behavior
+## 输出行为
 
-- If `--save` is provided, writes markdown to that exact path.
-- Otherwise writes to `~/Downloads/<source-audio-filename>.md`.
-- `--out-dir` overrides the default output directory.
-- `--name` overrides the default filename, but the generated file still uses `.md`; use `--save` if you need a fully custom path or extension.
-- The saved file is markdown and the script still prints progress to stderr and machine-useful final values to stdout.
-- No `requests` dependency, only Python stdlib (`urllib`, `json`, etc.).
+- 如果提供了 `--save`，就把 markdown 写到该精确路径。
+- 否则默认写入 `~/Downloads/<源音频文件名>.md`。
+- `--out-dir` 会覆盖默认输出目录。
+- `--name` 只覆盖默认文件名，但生成文件仍然使用 `.md` 扩展名；如果你需要完全自定义路径或扩展名，请使用 `--save`。
+- 保存结果是 markdown 文件，脚本仍会把进度输出到 stderr，并把便于机器读取的最终值输出到 stdout。
+- 不依赖 `requests`，只使用 Python 标准库（`urllib`、`json` 等）。
 
-## Configuration
+## 配置
 
-Store the API key in OpenClaw skill config, not a system shell variable:
+把 API key 存在 OpenClaw 的 skill 配置里，而不是系统 shell 环境变量中：
 
 ```json5
 {
@@ -73,12 +75,12 @@ Store the API key in OpenClaw skill config, not a system shell variable:
     entries: {
       "assemblyai-transcript": {
         env: {
-          ASSEMBLYAI_API_KEY: "YOUR_KEY"
-        }
-      }
-    }
-  }
+          ASSEMBLYAI_API_KEY: "YOUR_KEY",
+        },
+      },
+    },
+  },
 }
 ```
 
-This keeps the key scoped to the skill runtime instead of your global shell environment.
+这样可以把密钥作用域限制在 skill 运行时，而不是暴露在全局 shell 环境中。

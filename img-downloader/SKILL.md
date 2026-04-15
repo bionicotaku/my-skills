@@ -1,49 +1,49 @@
 ---
 name: img-downloader
-description: Download the main content images from a web page into a dedicated local folder. Use when a user wants the images from a URL saved locally, especially for article pages, manga/comic readers, galleries, or other image-heavy pages. Input is a page URL; output is an ordered image set saved under `~/Downloads/<folder-name>` with sequential filenames.
+description: 将网页正文中的主要图片下载到一个专用本地目录。适用于某个文章页面、漫画阅读页等页面里的图片保存到本地的场景。输入是页面 URL；输出是一组图片文件。
 ---
 
-# Img Downloader
+# 图片下载器
 
-Download a page's main content images in page order with minimal dependencies. Keep the extractor ad hoc and page-specific, but reuse the bundled downloader for the actual file downloads.
+用尽量少的依赖按页面顺序下载网页正文中的主要图片。提取器应保持按页面临时定制，而真正的下载阶段统一复用这个 skill 自带的下载脚本。
 
-## Workflow
+## 工作流
 
-1. Create a temporary working directory and write a temporary Python extractor script inside it.
-2. Fetch the target page with that temporary script.
-3. Extract the ordered image URL list with standard-library parsing tailored to that page.
-4. Prefer the page's main content images. Exclude obvious site chrome such as logos, avatars, icons, ads, trackers, or unrelated thumbnails unless the user explicitly asked for every page image.
-5. Normalize image URLs to absolute URLs and deduplicate them while preserving first-seen order.
-6. Decide a Downloads subfolder name yourself, usually from the page title or a short sanitized label.
-7. Save the final image URL list to a temporary file.
-8. Run `python3 {baseDir}/scripts/download_images.py` with that list and output folder, passing the page URL as `--referer` by default.
-9. Check the downloader result explicitly. Treat exit code `0` as full success, exit code `2` as partial success that must be reported to the user, and any other non-zero exit as failure.
-10. If direct fetching or downloading fails because the page blocks access, the HTML is incomplete, the CDN rejects requests, or the image URLs require browser context, use the `agent-browser` skill to open the page and extract the same ordered image list, then run the downloader again.
-11. If browser fallback also fails, stop and tell the user why.
-12. Before finishing, manually delete the temporary extractor script, the temporary image-list file, and the temporary working directory unless the user asked to keep them for debugging.
+1. 创建一个临时工作目录，并在其中写入临时 Python 提取脚本。
+2. 用这个临时脚本抓取目标页面。
+3. 使用适配该页面的标准库解析逻辑，提取有序图片 URL 列表。
+4. 默认优先选择页面正文图片。除非用户明确要求抓取页面中的全部图片，否则排除明显属于站点装饰层的内容，例如 logo、头像、图标、广告、追踪像素或无关缩略图。
+5. 把图片 URL 规范化为绝对 URL，并在保留首次出现顺序的前提下去重。
+6. 自行决定 Downloads 下的子目录名，通常取自页面标题或一个简短且清洗过的标签。
+7. 把最终图片 URL 列表保存到临时文件。
+8. 运行 `python3 {baseDir}/scripts/download_images.py`，传入该列表和输出目录，并默认把页面 URL 作为 `--referer`。
+9. 显式检查下载脚本结果。把退出码 `0` 视为完全成功，退出码 `2` 视为部分成功且必须告知用户，其他非零退出码都视为失败。
+10. 如果直接抓取或下载失败，原因可能是页面拦截访问、HTML 不完整、CDN 拒绝请求，或者图片 URL 需要浏览器上下文，此时使用 `agent-browser` skill 打开页面，提取同样有序的图片列表，再重新运行下载器。
+11. 如果浏览器回退仍然失败，就停止并告诉用户原因。
+12. 结束前手动删除临时提取脚本、临时图片列表文件和临时工作目录，除非用户要求为了调试保留它们。
 
-## Rules
+## 规则
 
-- Use only Python standard library and system tools in temporary scripts.
-- Do not bundle a universal extractor in this skill. Write the extractor per page at execution time.
-- Preserve page order exactly as rendered or as found in the source for that page.
-- Prefer main content images by default. Do not include obvious navigation, branding, avatar, advertisement, analytics, or other decorative page assets unless the user explicitly asks for every image on the page.
-- Normalize image URLs to absolute URLs and deduplicate exact matches while preserving first occurrence order.
-- Rename output files sequentially starting at `0`.
-- Save into a dedicated subfolder under `~/Downloads`, not loose files.
-- Invoke the bundled downloader as `python3 {baseDir}/scripts/download_images.py`, not via a cwd-dependent relative path.
-- Pass the source page URL as the default `--referer` unless there is a specific reason not to.
-- Keep retries bounded. Prefer one normal attempt, one browser fallback if needed, then stop.
-- Always inspect the downloader exit code. Exit code `0` means full success, `2` means partial success with one or more failed downloads, and any other non-zero exit means failure.
-- Manually clean up temporary extractor scripts, temporary URL-list files, and temporary working directories before finishing, whether the attempt succeeded or failed, unless they are needed for debugging or the user asked to keep them.
-- If browser fallback was used, close browser state before finishing.
-- Report concrete blockers, for example `403 from image CDN`, `page HTML contains no image URLs`, or `browser snapshot could not reveal image sources`.
+- 临时脚本中只使用 Python 标准库和系统工具。
+- 不要在这个 skill 里内置通用提取器。执行时按页面现写提取器。
+- 严格保留页面中的图片顺序，以页面实际渲染顺序或源码中可信顺序为准。
+- 默认优先保留正文主图片。除非用户明确要求抓取页面中的全部图片，否则不要包含明显的导航、品牌装饰、头像、广告、分析追踪或其他装饰性资源。
+- 把图片 URL 规范化为绝对 URL，并在保留首次出现顺序的前提下按精确匹配去重。
+- 输出文件按顺序从 `0` 开始命名。
+- 保存到 `~/Downloads` 下的专用子目录中，不要散落成单独文件。
+- 调用内置下载器时使用 `python3 {baseDir}/scripts/download_images.py`，不要依赖当前工作目录的相对路径。
+- 除非有明确理由，否则默认把源页面 URL 作为 `--referer` 传入。
+- 重试次数保持有界。优先一次正常尝试，必要时一次浏览器回退，然后停止。
+- 始终检查下载器退出码。退出码 `0` 表示完全成功，`2` 表示部分成功且有一个或多个文件下载失败，其他任意非零值都表示失败。
+- 无论成功还是失败，结束前都要手动清理临时提取脚本、临时 URL 列表文件和临时工作目录，除非这些文件为了调试需要保留，或者用户明确要求保留。
+- 如果使用了浏览器回退，结束前关闭浏览器状态。
+- 报告具体阻塞原因，例如 `image CDN 返回 403`、`页面 HTML 中不包含图片 URL` 或 `浏览器快照无法暴露图片源地址`。
 
-## Direct fetch path
+## 直接抓取路径
 
-Prefer the direct path first because it is simpler and faster.
+优先先走直接抓取路径，因为它更简单也更快。
 
-Typical pattern for the temporary extractor:
+临时提取器的典型模式如下：
 
 ```python
 import json
@@ -71,75 +71,75 @@ parser.feed(html)
 Path(sys.argv[1]).write_text(json.dumps(parser.images, ensure_ascii=False, indent=2), encoding="utf-8")
 ```
 
-Adjust the parser for the actual site. For some pages, image URLs are in JSON blobs, `srcset`, lazy-load attributes, or script tags. Tailor the temporary script to the page instead of trying to make it generic. If needed, add page-specific filtering so the result contains the main content image sequence rather than every `img` tag on the page.
+根据实际站点调整解析器。有些页面会把图片 URL 放在 JSON 数据块、`srcset`、懒加载属性或脚本标签里。临时脚本要针对页面定制，不要试图把它做成通用方案。必要时增加页面专属过滤逻辑，让结果只包含正文主图片序列，而不是页面上的所有 `img` 标签。
 
-## Browser fallback
+## 浏览器回退
 
-Use `agent-browser` when:
+在以下情况下使用 `agent-browser`：
 
-- the page returns blocked or incomplete HTML,
-- images only appear after client-side rendering,
-- CDN requests need browser session state,
-- or direct extraction cannot recover the final ordered URLs.
+- 页面返回的 HTML 被拦截或不完整；
+- 图片只会在客户端渲染后出现；
+- CDN 请求需要浏览器会话状态；
+- 或者直接提取无法恢复最终有序的图片 URL。
 
-Suggested flow:
+建议流程：
 
 1. `agent-browser open <url>`
-2. wait for network idle or the main content
-3. inspect snapshot / DOM / attributes to collect the final ordered image URLs
-4. normalize URLs, keep the main content images, and deduplicate exact matches while preserving order
-5. write that ordered list to a temp file
-6. run `python3 {baseDir}/scripts/download_images.py --input <temp-file> --output-dir ~/Downloads/<folder-name> --referer <page-url>`
-7. `agent-browser close --all` when done
+2. 等待网络空闲或正文内容加载完成
+3. 检查快照、DOM 或元素属性，收集最终有序图片 URL
+4. 规范化 URL，保留正文主图片，并在保持顺序的前提下按精确匹配去重
+5. 把该有序列表写入临时文件
+6. 运行 `python3 {baseDir}/scripts/download_images.py --input <temp-file> --output-dir ~/Downloads/<folder-name> --referer <page-url>`
+7. 完成后执行 `agent-browser close --all`
 
-If fallback still cannot produce a trustworthy ordered list, stop instead of looping.
+如果回退方案仍然无法产出可信的有序列表，就直接停止，不要循环尝试。
 
-## Output folder naming
+## 输出目录命名
 
-Choose a short readable folder name. Good defaults:
+选择一个简短且易读的目录名。合理默认值包括：
 
-- page title,
-- article slug,
-- site name plus title,
-- or `downloaded-images-YYYYMMDD-HHMMSS` if nothing usable exists.
+- 页面标题；
+- 文章 slug；
+- 站点名加标题；
+- 或者在没有可用名称时使用 `downloaded-images-YYYYMMDD-HHMMSS`。
 
-Sanitize only as much as needed for the local filesystem.
+只做本地文件系统所需的最小限度清洗。
 
-## Bundled script
+## 内置脚本
 
-Use `{baseDir}/scripts/download_images.py` for the download phase.
+下载阶段使用 `{baseDir}/scripts/download_images.py`。
 
-Prefer invoking it via `python3 {baseDir}/scripts/download_images.py` so the skill does not depend on the current working directory.
+优先通过 `python3 {baseDir}/scripts/download_images.py` 调用它，这样 skill 不会依赖当前工作目录。
 
-### Input
+### 输入
 
-The script accepts either:
+脚本接受以下两种输入之一：
 
-- a JSON array of image URLs, or
-- a plain text file with one URL per line.
+- 图片 URL 的 JSON 数组；
+- 或者每行一个 URL 的纯文本文件。
 
-### Command
+### 命令
 
 ```bash
 python3 {baseDir}/scripts/download_images.py --input /tmp/image-urls.txt --output-dir ~/Downloads/<folder-name> --referer <page-url>
 ```
 
-If you have a specific reason not to send the page URL as a referer, this variant is also allowed:
+如果你有明确理由不把页面 URL 作为 referer 发送，也可以使用这个变体：
 
 ```bash
 python3 {baseDir}/scripts/download_images.py --input /tmp/image-urls.txt --output-dir ~/Downloads/<folder-name>
 ```
 
-### Exit codes
+### 退出码
 
-- `0`: all images downloaded successfully
-- `2`: partial success; one or more images failed and the user must be told how many failed
-- other non-zero: failure
+- `0`：全部图片下载成功
+- `2`：部分成功；有一张或多张图片下载失败，必须告诉用户失败数量
+- 其他非零值：失败
 
-## Success criteria
+## 成功标准
 
-- output folder exists under `~/Downloads`
-- files are named `0`, `1`, `2`, ... with inferred extensions
-- for full success, downloaded file count matches the extracted image list length
-- for partial success, the user gets the destination folder plus a concrete failure summary
-- all temporary extractor, URL-list, and working-directory artifacts are cleaned up unless intentionally kept for debugging
+- 输出目录存在于 `~/Downloads` 下
+- 文件按 `0`、`1`、`2`……命名，并带有推断出的扩展名
+- 对于完全成功，下载得到的文件数量要与提取出的图片列表长度一致
+- 对于部分成功，用户要拿到目标目录路径和明确的失败摘要
+- 除非出于调试目的刻意保留，否则所有临时提取器、URL 列表和工作目录产物都已清理

@@ -77,5 +77,5 @@ python3 {baseDir}/scripts/download_images.py --input /tmp/image-urls.txt --outpu
 
 ## 相关文件
 
-- [SKILL.md](/Users/evan/Documents/my-skills/img-downloader/SKILL.md)
-- [scripts/download_images.py](/Users/evan/Documents/my-skills/img-downloader/scripts/download_images.py)
+- [SKILL.md](./SKILL.md)
+- [scripts/download_images.py](./scripts/download_images.py)

@@ -118,6 +118,6 @@ python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --out-dir /path/to/outpu
 
 ## 相关文件
 
-- [SKILL.md](/Users/evan/Downloads/my-skills/video-watcher/SKILL.md)
-- [scripts/get_transcript.py](/Users/evan/Downloads/my-skills/video-watcher/scripts/get_transcript.py)
-- [../assemblyai-transcript/README.md](/Users/evan/Downloads/my-skills/assemblyai-transcript/README.md)
+- [SKILL.md](./SKILL.md)
+- [scripts/get_transcript.py](./scripts/get_transcript.py)
+- [../assemblyai-transcript/README.md](../assemblyai-transcript/README.md)

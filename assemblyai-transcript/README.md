@@ -64,5 +64,5 @@ python3 {baseDir}/scripts/transcribe.py /path/to/audio.m4a --interval 3
 
 ## 相关文件
 
-- [SKILL.md](/Users/evan/Downloads/my-skills/assemblyai-transcript/SKILL.md)
-- [scripts/transcribe.py](/Users/evan/Downloads/my-skills/assemblyai-transcript/scripts/transcribe.py)
+- [SKILL.md](./SKILL.md)
+- [scripts/transcribe.py](./scripts/transcribe.py)

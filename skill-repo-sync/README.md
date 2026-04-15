@@ -58,6 +58,6 @@ python3 {baseDir}/scripts/sync_skills.py /absolute/path/to/skills --dry-run
 
 ## 相关文件
 
-- [SKILL.md](/Users/evan/Documents/my-skills/skill-repo-sync/SKILL.md)
-- [agents/openai.yaml](/Users/evan/Documents/my-skills/skill-repo-sync/agents/openai.yaml)
-- [scripts/sync_skills.py](/Users/evan/Documents/my-skills/skill-repo-sync/scripts/sync_skills.py)
+- [SKILL.md](./SKILL.md)
+- [agents/openai.yaml](./agents/openai.yaml)
+- [scripts/sync_skills.py](./scripts/sync_skills.py)

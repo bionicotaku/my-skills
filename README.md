@@ -41,9 +41,9 @@ my-skills/
 - 用途：把本地音频上传到 AssemblyAI 做转写
 - 输出：默认保存到 `~/Downloads/<原音频名>.md`
 - 入口：
-  - [assemblyai-transcript/README.md](/Users/evan/Documents/my-skills/assemblyai-transcript/README.md)
-  - [assemblyai-transcript/SKILL.md](/Users/evan/Documents/my-skills/assemblyai-transcript/SKILL.md)
-  - [assemblyai-transcript/scripts/transcribe.py](/Users/evan/Documents/my-skills/assemblyai-transcript/scripts/transcribe.py)
+  - [assemblyai-transcript/README.md](./assemblyai-transcript/README.md)
+  - [assemblyai-transcript/SKILL.md](./assemblyai-transcript/SKILL.md)
+  - [assemblyai-transcript/scripts/transcribe.py](./assemblyai-transcript/scripts/transcribe.py)
 
 ### `img-downloader`
 
@@ -51,9 +51,9 @@ my-skills/
 - 输出：默认保存到 `~/Downloads/<页面标题或自定文件夹名>/`
 - 特点：临时写页面专用 extractor，必要时回退到浏览器提取，再统一调用下载脚本
 - 入口：
-  - [img-downloader/SKILL.md](/Users/evan/Documents/my-skills/img-downloader/SKILL.md)
-  - [img-downloader/README.md](/Users/evan/Documents/my-skills/img-downloader/README.md)
-  - [img-downloader/scripts/download_images.py](/Users/evan/Documents/my-skills/img-downloader/scripts/download_images.py)
+  - [img-downloader/SKILL.md](./img-downloader/SKILL.md)
+  - [img-downloader/README.md](./img-downloader/README.md)
+  - [img-downloader/scripts/download_images.py](./img-downloader/scripts/download_images.py)
 
 ### `skill-repo-sync`
 
@@ -61,19 +61,19 @@ my-skills/
 - 同步策略：同名 skill 覆盖更新，缺失 skill 自动复制，目标目录中其他 skill 保持不变
 - 特点：脚本会根据自身位置自动反推出源仓库根目录，因此调用时只需要传目标目录绝对路径
 - 入口：
-  - [skill-repo-sync/README.md](/Users/evan/Documents/my-skills/skill-repo-sync/README.md)
-  - [skill-repo-sync/SKILL.md](/Users/evan/Documents/my-skills/skill-repo-sync/SKILL.md)
-  - [skill-repo-sync/agents/openai.yaml](/Users/evan/Documents/my-skills/skill-repo-sync/agents/openai.yaml)
-  - [skill-repo-sync/scripts/sync_skills.py](/Users/evan/Documents/my-skills/skill-repo-sync/scripts/sync_skills.py)
+  - [skill-repo-sync/README.md](./skill-repo-sync/README.md)
+  - [skill-repo-sync/SKILL.md](./skill-repo-sync/SKILL.md)
+  - [skill-repo-sync/agents/openai.yaml](./skill-repo-sync/agents/openai.yaml)
+  - [skill-repo-sync/scripts/sync_skills.py](./skill-repo-sync/scripts/sync_skills.py)
 
 ### `video-watcher`
 
 - 用途：抓取 YouTube / Bilibili 字幕；没有字幕时回退到 `assemblyai-transcript`
 - 输出：脚本先生成 draft markdown，skill workflow 再要求 agent 做最后整理
 - 入口：
-  - [video-watcher/SKILL.md](/Users/evan/Documents/my-skills/video-watcher/SKILL.md)
-  - [video-watcher/README.md](/Users/evan/Documents/my-skills/video-watcher/README.md)
-  - [video-watcher/scripts/get_transcript.py](/Users/evan/Documents/my-skills/video-watcher/scripts/get_transcript.py)
+  - [video-watcher/SKILL.md](./video-watcher/SKILL.md)
+  - [video-watcher/README.md](./video-watcher/README.md)
+  - [video-watcher/scripts/get_transcript.py](./video-watcher/scripts/get_transcript.py)
 
 ## 约定
 

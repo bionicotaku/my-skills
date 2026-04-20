@@ -9,6 +9,7 @@ from urllib import error, request
 
 BASE_URL = "https://api.assemblyai.com"
 DEFAULT_OUTPUT_DIR = Path.home() / "Downloads"
+UPLOAD_TIMEOUT_SECONDS = 20 * 60
 
 
 def eprint(*args, **kwargs):
@@ -52,7 +53,7 @@ def upload_file(file_path: str, api_key: str) -> str:
         "Content-Type": "application/octet-stream",
     }
 
-    result = http_post(f"{BASE_URL}/v2/upload", headers, data, timeout=300)
+    result = http_post(f"{BASE_URL}/v2/upload", headers, data, timeout=UPLOAD_TIMEOUT_SECONDS)
     upload_url = result.get("upload_url")
     if not upload_url:
         raise RuntimeError(f"Upload succeeded but no upload_url returned: {result}")

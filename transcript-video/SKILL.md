@@ -1,6 +1,6 @@
 ---
 name: transcript-video
-description: 从 YouTube 或 Bilibili 视频中获取Speech-to-Text 转录文本。适用于你需要视频文稿来做摘要、问答或信息提取的场景。输入是视频 URL；输出 markdown 转录文件。
+description: 从 YouTube 或 Bilibili 视频中提取字幕素材或下载音频素材。适用于你需要先准备视频 transcript 原始输入，再决定后续转写或整理方式的场景。输入是视频 URL；输出是字幕文本或音频文件路径与元数据。
 ---
 
 # 视频文稿提取
@@ -9,29 +9,30 @@ description: 从 YouTube 或 Bilibili 视频中获取Speech-to-Text 转录文本
 
 ## 规则
 
-- 脚本输出只是草稿。不要在脚本执行结束后就停止。
-- 结束前始终在 agent 内完整读取保存下来的 markdown，并用最终版本覆盖回去。
+- `get_transcript.py` 只负责准备素材，不负责直接调用 `assemblyai-transcript`，也不负责产出最终 markdown。
+- 如果脚本返回的是字幕素材，就直接基于字幕整理最终 markdown；不要再走 AssemblyAI。
+- 如果脚本返回的是音频素材，再由 agent 根据任务上下文决定调用 `assemblyai-transcript` 的单文件脚本还是 batch 脚本，以及最终输出目录。
+- 结束前始终在 agent 内完整读取最终保存下来的 markdown，并用最终版本覆盖回去。
 - 只对 `## Transcript` 正文做轻量清理：修正明显局部错误，并在合理边界处拆分段落。不要把转录内容改写或转述成新的 prose。
-- 字幕、音频和转写中间产物都只能放在临时目录里，并在最终 markdown 成功写出后删除。
+- 字幕、音频和其他中间产物都放在工作目录里的 asset 子目录；只有在最终 markdown 成功写出后才删除。
 
 ## 工作流
 
-1. 先尝试用 `yt-dlp` 获取平台字幕。
-2. 如果没有字幕，就把音频下载到本地并交给同级的 `assemblyai-transcript` skill 处理。
-3. 无论走哪条分支，都把中间结果写到同一个临时 `transcript.md` 路径，结构使用：`# Intermediate Transcript`、`## Metadata`、`## Transcript`。
-4. 默认把 markdown 草稿保存到 `~/Downloads`，文件名取自视频标题。
-5. 脚本结束后，从最终输出路径读取完整生成结果。
-6. 添加简洁摘要，并且只对转录正文做一次轻量清理。
-7. 用以下最终结构覆盖写回同一个 markdown 文件：
+1. 先运行 `get_transcript.py`，让它尝试抓字幕；没有字幕时只下载音频。
+2. 读取脚本输出的 JSON 结果，确认本次拿到的是 `subtitle` 还是 `audio`。
+3. 如果是 `subtitle`，直接基于返回的 `transcript_path` 和 `metadata.json` 生成最终 markdown。
+4. 如果是 `audio`，再决定是否调用 `assemblyai-transcript/scripts/transcribe.py` 或 `assemblyai-transcript/scripts/transcribe_batch.py`，并自己决定输出目录。
+5. 拿到最终 transcript 后，补简洁摘要，并且只对转录正文做一次轻量清理。
+6. 用以下最终结构覆盖写回最终 markdown：
    标题
    摘要
    元数据
    转录正文
-8. 清理所有中间临时文件，只保留最终 markdown 输出。
+7. 最终 markdown 成功写出后，删除这次任务对应的 asset 目录。
 
 ## 用法
 
-### 自动回退获取文稿
+### 准备视频素材
 
 ```bash
 python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL"
@@ -43,24 +44,22 @@ python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL"
 python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --lang zh-CN
 ```
 
-### 选择其他输出目录
+### 指定 asset 工作目录
 
 ```bash
-python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --out-dir /path/to/output
+python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --work-dir /path/to/workdir
 ```
 
 ## 说明
 
 - 支持 YouTube 和 Bilibili URL
 - 依赖 `yt-dlp`
-- 依赖同级 `assemblyai-transcript` skill，路径是 `../assemblyai-transcript/scripts/transcribe.py`
-- 通过 `assemblyai-transcript` 这层依赖要求提供 `ASSEMBLYAI_API_KEY`
-- `--lang` 用于控制字幕查找优先级；如果字幕获取失败，AssemblyAI 回退路径会自动识别语言
-- 音频回退路径会把下载下来的文件直接交给 AssemblyAI，不会在本地转码
-- 文件名取自视频标题，而不是附加视频 id
-- 用标准化的最终结构覆盖写回同一个 markdown 文件：
+- `get_transcript.py` 的 stdout 是结构化 JSON，至少会给出 `kind`、`asset_dir`、`metadata_path` 和素材路径
+- `--lang` 只用于控制字幕查找优先级；如果最后返回的是音频素材，后续是否自动识别语言由 `assemblyai-transcript` 决定
+- asset 目录名来自视频标题和视频 id，方便后续 agent 明确清理范围
+- 最终 markdown 仍然要由 agent 用标准化结构覆盖写回：
   `# <Title>`
   `## 摘要`
   `## Metadata`
   `## Transcript`
-- 默认输出目录：`~/Downloads`
+- 默认 asset 工作目录：`~/Downloads/transcript-video-assets`

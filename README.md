@@ -46,7 +46,7 @@ my-skills/
 │   ├── SKILL.md
 │   └── scripts/
 │       └── sync_skills.py
-└── video-watcher/
+└── transcript-video/
     ├── README.md
     ├── SKILL.md
     └── scripts/
@@ -63,6 +63,7 @@ my-skills/
   - [assemblyai-transcript/README.md](./assemblyai-transcript/README.md)
   - [assemblyai-transcript/SKILL.md](./assemblyai-transcript/SKILL.md)
   - [assemblyai-transcript/scripts/transcribe.py](./assemblyai-transcript/scripts/transcribe.py)
+  - [assemblyai-transcript/scripts/transcribe_batch.py](./assemblyai-transcript/scripts/transcribe_batch.py)
 
 ### `img-downloader`
 
@@ -104,14 +105,14 @@ my-skills/
   - [skill-repo-sync/SKILL.md](./skill-repo-sync/SKILL.md)
   - [skill-repo-sync/scripts/sync_skills.py](./skill-repo-sync/scripts/sync_skills.py)
 
-### `video-watcher`
+### `transcript-video`
 
-- 用途：抓取 YouTube / Bilibili 字幕；没有字幕时回退到 `assemblyai-transcript`
-- 输出：脚本先生成 draft markdown，skill workflow 再要求 agent 做最后整理
+- 用途：抓取 YouTube / Bilibili 字幕；没有字幕时只下载音频素材，后续是否调用 `assemblyai-transcript` 由 agent 决定
+- 输出：脚本返回字幕或音频素材路径与元数据；最终 markdown 由后续 workflow 生成
 - 入口：
-  - [video-watcher/README.md](./video-watcher/README.md)
-  - [video-watcher/SKILL.md](./video-watcher/SKILL.md)
-  - [video-watcher/scripts/get_transcript.py](./video-watcher/scripts/get_transcript.py)
+  - [transcript-video/README.md](./transcript-video/README.md)
+  - [transcript-video/SKILL.md](./transcript-video/SKILL.md)
+  - [transcript-video/scripts/get_transcript.py](./transcript-video/scripts/get_transcript.py)
 
 ## 仓库约定
 

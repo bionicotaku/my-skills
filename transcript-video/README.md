@@ -1,34 +1,33 @@
 # transcript-video
 
-处理对 YouTube 和 Bilibili 视频链接的 transcript。优先抓平台现成字幕，抓不到时再下载音频并调用同仓库里的 `assemblyai-transcript` 做转写。
+处理对 YouTube 和 Bilibili 视频链接的 transcript。优先抓平台现成字幕，抓不到时只下载音频素材，后续是否调用 `assemblyai-transcript` 由 agent 决定。
 
 ## 这个 skill 做什么
 
 - 支持 YouTube 和 Bilibili 视频链接
 - 自动识别平台
 - 优先用 `yt-dlp` 抓字幕
-- 抓不到字幕时回退到音频下载 + `assemblyai-transcript`
-- 中间 transcript 统一写成同一个临时 `transcript.md`
-- 最终输出到 `~/Downloads`
-- 脚本只负责产出 draft，后续需要 agent 读取整份 markdown 做最后整理
+- 抓不到字幕时回退到音频下载
+- 脚本只准备素材和元数据，不直接产出最终 markdown
+- 后续由 agent 决定是否调用 `assemblyai-transcript` 的单文件或 batch 入口
+- 最终再由 agent 做整理、收尾和清理
 
 ## 依赖
 
 - `python3`
 - `yt-dlp`
-- sibling skill：`assemblyai-transcript`
-- `ASSEMBLYAI_API_KEY`
+- 如果需要 AssemblyAI fallback，后续阶段才需要 sibling skill：`assemblyai-transcript`
 
 ## 基本流程
 
 1. 识别是 YouTube 还是 Bilibili
 2. 先用 `yt-dlp` 抓字幕
-3. 如果有字幕，就清洗字幕内容并写入临时 `transcript.md`
-4. 如果没有字幕，就下载音频
-5. 把音频直接交给 `assemblyai-transcript`
-6. `assemblyai-transcript` 返回后，再统一整理成相同的中间 markdown 格式
-7. 根据视频标题把 draft markdown 输出到最终目录
-8. agent 再读取最终 markdown，补摘要、轻度清洗正文、调整文段边界，并覆盖原文件
+3. 如果有字幕，就保存原字幕文件和清洗后的 `subtitle.txt`
+4. 如果没有字幕，就只下载音频文件
+5. 脚本输出 JSON，告诉 agent 这次拿到的是 `subtitle` 还是 `audio`
+6. 如果是 `audio`，agent 再决定是否调用 `assemblyai-transcript/scripts/transcribe.py` 或 `transcribe_batch.py`
+7. agent 生成最终 markdown，补摘要、轻度清洗正文、调整文段边界，并覆盖原文件
+8. agent 最后删除这次任务的 asset 目录
 
 ## 语言逻辑
 
@@ -36,58 +35,26 @@
   - YouTube：`en`
   - Bilibili：`zh-CN`
 - `--lang` 只影响字幕抓取偏好
-- 如果进入 AssemblyAI fallback，语言检测交给 AssemblyAI 自动处理
+- 如果最后拿到的是音频素材，是否自动识别语言由后续 `assemblyai-transcript` 调用决定
 
-## 中间文件格式
+## 素材目录结构
 
-无论 transcript 来源于字幕还是 AssemblyAI，中间文件都统一成：
+每次运行会在工作目录里创建一个基于标题和视频 id 的 asset 子目录，例如：
 
-```markdown
-# Intermediate Transcript
-
-## Metadata
-
-- Source mode: ...
-- Language: ...
-
-## Transcript
-
-...
+```text
+<work-dir>/
+  <title>-<video-id>/
+    metadata.json
+    subtitle.vtt|subtitle.srt
+    subtitle.txt
+    audio.<ext>
 ```
 
-## 最终文档结构
+其中：
 
-脚本输出应被视为 draft。这个 skill 的完整 workflow 要求 agent 读取最终输出目录中的 markdown，并覆盖成统一结构：
-
-```markdown
-# <Video Title>
-
-## 摘要
-
-- 简洁摘要
-
-## Metadata
-
-- Platform: ...
-- Source mode: ...
-- Language: ...
-- Uploader: ...
-- Duration: ...
-- URL: ...
-- Video ID: ...
-
-## Transcript
-
-正文
-```
-
-注意：
-
-- 可以整文件覆盖写回
-- 但 `## Transcript` 正文只做轻度处理
-- 允许修正局部明显错误
-- 允许按自然边界切分文段
-- 不允许把整段 transcript 改写成另一版 prose
+- 有字幕时会保存 `subtitle.vtt|subtitle.srt` 和清洗后的 `subtitle.txt`
+- 无字幕时会保存下载下来的 `audio.<ext>`
+- `metadata.json` 始终存在，供后续整理最终 markdown 使用
 
 ## 用法
 
@@ -103,18 +70,17 @@ python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL"
 python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --lang zh-CN
 ```
 
-指定输出目录：
+指定 asset 工作目录：
 
 ```bash
-python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --out-dir /path/to/output
+python3 {baseDir}/scripts/get_transcript.py "VIDEO_URL" --work-dir /path/to/output
 ```
 
 ## 适合的场景
 
 - 想快速拿到视频 transcript
-- 想先用字幕，没字幕再自动 fallback
-- 想把最终文档标准化成可读的 markdown
-- 想让 transcript 和 summary 工作流统一
+- 想先拿到字幕/音频素材，再自己决定后续转写链路
+- 想把最终文档标准化成可读的 markdown，并把清理动作放在最后一步
 
 ## 相关文件
 

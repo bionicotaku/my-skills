@@ -1,10 +1,23 @@
 ---
 name: Self-Improving
-slug: self-improving
-version: 1.2.16
-homepage: https://clawic.com/skills/self-improving
 description: "Canonical OpenClaw self-improvement workflow. Capture raw incidents in workspace .learnings/, promote only durable rules into ~/self-improving/, maintain promoted memory conservatively, and keep the behavior auditable."
-metadata: {"clawdbot":{"emoji":"🧠","requires":{"bins":[]},"os":["linux","darwin","win32"],"configPaths":["~/self-improving/"],"configPaths.optional":["~/.openclaw/workspace/.learnings/","./AGENTS.md","./SOUL.md","./HEARTBEAT.md"]}}
+metadata:
+  {
+    "clawdbot":
+      {
+        "emoji": "🧠",
+        "requires": { "bins": [] },
+        "os": ["linux", "darwin", "win32"],
+        "configPaths": ["~/self-improving/"],
+        "configPaths.optional":
+          [
+            "~/.openclaw/workspace/.learnings/",
+            "./AGENTS.md",
+            "./SOUL.md",
+            "./HEARTBEAT.md",
+          ],
+      },
+  }
 ---
 
 ## Purpose
@@ -12,6 +25,7 @@ metadata: {"clawdbot":{"emoji":"🧠","requires":{"bins":[]},"os":["linux","darw
 This is the canonical self-improvement skill for OpenClaw.
 
 Use it when:
+
 - a command, tool, API, or workflow fails
 - the user corrects you
 - you discover a knowledge gap
@@ -19,6 +33,7 @@ Use it when:
 - you need to decide whether a lesson stays raw or becomes long-term guidance
 
 The skill implements one model only:
+
 - raw incident capture lives in workspace `.learnings/`
 - promoted long-term guidance lives in `~/self-improving/`
 
@@ -36,6 +51,7 @@ OpenClaw workspace path:
 ```
 
 Purpose:
+
 - record failures, first corrections, tentative lessons, knowledge gaps, and missing capabilities
 - preserve the original event before any promotion
 - keep ambiguous or one-off signals out of long-term memory
@@ -55,6 +71,7 @@ User-level path:
 ```
 
 Purpose:
+
 - store durable preferences and rules
 - track corrections with lasting value
 - keep domain and project guidance scoped correctly
@@ -65,17 +82,18 @@ Purpose:
 
 ## Routing Table
 
-| Situation | Write To | Why |
-|----------|----------|-----|
-| Command, tool, API, or workflow failure | `~/.openclaw/workspace/.learnings/ERRORS.md` | Raw incident log |
-| Missing capability or unmet request | `~/.openclaw/workspace/.learnings/FEATURE_REQUESTS.md` | Capability gap |
-| First correction, tentative lesson, knowledge gap | `~/.openclaw/workspace/.learnings/LEARNINGS.md` | Tentative until confirmed |
-| Explicit durable correction with lasting value | `~/self-improving/corrections.md` | Long-term correction history |
-| Durable global preference or reusable rule | `~/self-improving/memory.md` | Global promoted guidance |
-| Domain-level recurring pattern | `~/self-improving/domains/<domain>.md` | Scoped long-term pattern |
-| Project-specific long-term override | `~/self-improving/projects/<project>.md` | Project-only override |
+| Situation                                         | Write To                                               | Why                          |
+| ------------------------------------------------- | ------------------------------------------------------ | ---------------------------- |
+| Command, tool, API, or workflow failure           | `~/.openclaw/workspace/.learnings/ERRORS.md`           | Raw incident log             |
+| Missing capability or unmet request               | `~/.openclaw/workspace/.learnings/FEATURE_REQUESTS.md` | Capability gap               |
+| First correction, tentative lesson, knowledge gap | `~/.openclaw/workspace/.learnings/LEARNINGS.md`        | Tentative until confirmed    |
+| Explicit durable correction with lasting value    | `~/self-improving/corrections.md`                      | Long-term correction history |
+| Durable global preference or reusable rule        | `~/self-improving/memory.md`                           | Global promoted guidance     |
+| Domain-level recurring pattern                    | `~/self-improving/domains/<domain>.md`                 | Scoped long-term pattern     |
+| Project-specific long-term override               | `~/self-improving/projects/<project>.md`               | Project-only override        |
 
 Default behavior:
+
 - first occurrence stays in `.learnings/`
 - ambiguous scope stays in `.learnings/`
 - promotion happens later, not during initial capture
@@ -90,12 +108,14 @@ Promote from `.learnings/` to `~/self-improving/` only when at least one of thes
 4. the scope is clearly a durable domain or project rule
 
 Promotion rules:
+
 - promote to the smallest correct scope
 - keep the source path auditable from raw capture to promoted rule
 - prefer explicit evidence over inference
 - keep promoted memory sparse and high-signal
 
 Never do these:
+
 - do not promote on first occurrence unless the human clearly confirms it
 - do not infer long-term preferences from silence
 - do not treat a one-off file instruction as a general rule
@@ -106,12 +126,14 @@ Never do these:
 Heartbeat only maintains the promoted layer in `~/self-improving/`.
 
 Allowed heartbeat actions:
+
 - refresh `index.md` if counts or references drift
 - lightly compact repetitive promoted notes without changing meaning
 - move clearly misplaced promoted notes when the target scope is unambiguous
 - update `heartbeat-state.md`
 
 Not allowed:
+
 - no automatic promotion from `.learnings/`
 - no guessing new rules from repeated silence
 - no broad rewrites of promoted memory
@@ -122,10 +144,12 @@ Read `heartbeat-rules.md` for the stable contract.
 ## Security Boundaries
 
 Security rules apply to both layers:
+
 - raw capture in `.learnings/`
 - promoted memory in `~/self-improving/`
 
 Never store:
+
 - credentials, tokens, keys
 - financial, medical, or biometric data
 - third-party personal information
@@ -138,10 +162,12 @@ Read `boundaries.md` before expanding what gets stored.
 This skill assumes OpenClaw is the primary environment.
 
 Minimal runtime paths:
+
 - `~/.openclaw/workspace/.learnings/`
 - `~/self-improving/`
 
 Minimal workspace guidance:
+
 - `AGENTS.md` should route raw incidents into `.learnings/` and promoted rules into `~/self-improving/`
 - `SOUL.md` should reinforce retrieval before non-trivial work and conservative promotion
 - `HEARTBEAT.md` should point at `heartbeat-rules.md` and `~/self-improving/heartbeat-state.md`
@@ -158,6 +184,7 @@ Read `setup.md` for the non-destructive setup and recovery flow.
 ## References
 
 Keep the reference set small:
+
 - `setup.md`
 - `heartbeat-rules.md`
 - `boundaries.md`
@@ -166,6 +193,7 @@ Keep the reference set small:
 ## Non-Goals
 
 This skill does not:
+
 - store runtime state in the installed skill directory
 - create an alternate memory system inside the repo
 - ship repo-level Claude/Codex hook scaffolding

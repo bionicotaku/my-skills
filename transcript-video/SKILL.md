@@ -1,5 +1,5 @@
 ---
-name: video-watcher
+name: transcript-video
 description: 从 YouTube 或 Bilibili 视频中获取Speech-to-Text 转录文本。适用于你需要视频文稿来做摘要、问答或信息提取的场景。输入是视频 URL；输出 markdown 转录文件。
 ---
 

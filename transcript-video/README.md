@@ -1,6 +1,6 @@
-# Video Watcher
+# transcript-video
 
-这是我自己在本地用的一个视频 transcript skill，主要处理 YouTube 和 Bilibili。优先抓平台现成字幕，抓不到时再下载音频并调用同仓库里的 `assemblyai-transcript` 做转写。
+处理对 YouTube 和 Bilibili 视频链接的 transcript。优先抓平台现成字幕，抓不到时再下载音频并调用同仓库里的 `assemblyai-transcript` 做转写。
 
 ## 这个 skill 做什么
 

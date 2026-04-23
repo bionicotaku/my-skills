@@ -14,6 +14,7 @@ description: 从 YouTube 或 Bilibili 视频中提取字幕素材或下载音频
 - 如果脚本返回的是音频素材，再由 agent 根据任务上下文决定调用 `assemblyai-transcript` 的单文件脚本还是 batch 脚本，以及最终输出目录。
 - YouTube / Bilibili 的 `yt-dlp` 调用如果遇到登录、验证码、风控、403、412、429 等错误，脚本会自动追加 Safari cookies 重试一次；重试仍失败就报错退出。
 - 多个视频 URL 使用 `get_transcript_batch.py`，它默认用 4 进程池并发调用同一套素材准备逻辑。
+- 字幕和音频素材阶段都会先把下载类型输出到 stderr；只有下载音频素材阶段会继续输出 `yt-dlp` 进度。stdout 仍然只输出结构化 JSON。
 - 结束前始终在 agent 内完整读取最终保存下来的 markdown，并用最终版本覆盖回去。
 - 只对 `## Transcript` 正文做轻量清理：修正明显局部错误，并在合理边界处拆分段落。不要把转录内容改写或转述成新的 prose。
 - 字幕、音频和其他中间产物都放在工作目录里的 asset 子目录；只有在最终 markdown 成功写出后才删除。
@@ -67,6 +68,7 @@ python {baseDir}/scripts/get_transcript_batch.py --input-file urls.txt
 - `--lang` 只用于控制字幕查找优先级；如果最后返回的是音频素材，后续是否自动识别语言由 `assemblyai-transcript` 决定
 - Safari cookies 只作为 `yt-dlp` 失败后的降级路径，不是默认路径；Bilibili 原有 `User-Agent` 和 `Referer` header 会继续保留
 - `get_transcript_batch.py` 默认 `--workers 4`，输出 JSON 汇总；任意 URL 失败时最终退出码为 1
+- metadata 阶段不输出进度；字幕阶段只输出下载类型；下载音频素材时输出下载类型和 `yt-dlp` 下载进度
 - asset 目录名来自视频标题和视频 id，方便后续 agent 明确清理范围
 - 最终 markdown 仍然要由 agent 用标准化结构覆盖写回：
   `# <Title>`

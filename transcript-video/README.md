@@ -10,6 +10,7 @@
 - 抓不到字幕时回退到音频下载
 - YouTube / Bilibili 遇到登录、验证码、风控、403、412、429 等 `yt-dlp` 错误时，会用 Safari cookies 自动重试一次
 - 脚本只准备素材和元数据，不直接产出最终 markdown
+- 只有下载音频素材时会把 `yt-dlp` 进度输出到 stderr；stdout 始终保留为最终 JSON
 - 后续由 agent 决定是否调用 `assemblyai-transcript` 的单文件或 batch 入口
 - 最终再由 agent 做整理、收尾和清理
 - 批量入口使用 4 进程池并发处理多个 URL，仍然只准备素材
@@ -47,6 +48,13 @@
 - 重试使用 `--cookies-from-browser safari`，适用于 YouTube 和 Bilibili。
 - Bilibili 的 `User-Agent` 和 `Referer` header 会继续保留，Safari cookies 只是追加参数。
 - 如果 Safari cookies 因 macOS 权限、未登录、cookies 失效或平台继续拦截而失败，脚本会停止，不再静默回退。
+
+## 命令行输出
+
+- stdout 只输出最终 JSON，方便 agent 或脚本继续解析。
+- metadata 阶段保持安静。
+- 字幕阶段会在 stderr 打印 `Download type: subtitles (<lang>)`，但不显示详细进度。
+- 下载音频素材阶段会显示 `yt-dlp` 原生进度到 stderr，便于观察下载速度、百分比和剩余时间。
 
 ## 素材目录结构
 

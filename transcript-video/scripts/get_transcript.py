@@ -69,6 +69,32 @@ def run(cmd, cwd=None, check=True):
     return subprocess.run(cmd, cwd=cwd, check=check, capture_output=True, text=True)
 
 
+def eprint(message: str):
+    print(message, file=sys.stderr, flush=True)
+
+
+def run_streaming(cmd, cwd=None, check=True):
+    process = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+    output_parts = []
+    if process.stdout is not None:
+        for line in process.stdout:
+            output_parts.append(line)
+            print(line, end="", file=sys.stderr, flush=True)
+
+    returncode = process.wait()
+    output = "".join(output_parts)
+    if check and returncode != 0:
+        raise subprocess.CalledProcessError(returncode, cmd, output=output, stderr=output)
+    return subprocess.CompletedProcess(cmd, returncode, stdout=output, stderr="")
+
+
 def ytdlp_error_text(exc: subprocess.CalledProcessError) -> str:
     return (exc.stderr or exc.stdout or "Unknown yt-dlp error").strip()
 
@@ -84,9 +110,10 @@ def add_safari_cookie_args(cmd: list[str]) -> list[str]:
     return [*cmd[:-1], *SAFARI_COOKIE_ARGS, cmd[-1]]
 
 
-def run_ytdlp_with_cookie_fallback(cmd: list[str], cwd=None):
+def run_ytdlp_with_cookie_fallback(cmd: list[str], cwd=None, stream_output: bool = False):
+    runner = run_streaming if stream_output else run
     try:
-        return run(cmd, cwd=cwd)
+        return runner(cmd, cwd=cwd)
     except subprocess.CalledProcessError as first_exc:
         first_error = ytdlp_error_text(first_exc)
         if not is_cookie_retryable_ytdlp_error(first_error):
@@ -94,7 +121,7 @@ def run_ytdlp_with_cookie_fallback(cmd: list[str], cwd=None):
 
         cookie_cmd = add_safari_cookie_args(cmd)
         try:
-            return run(cookie_cmd, cwd=cwd)
+            return runner(cookie_cmd, cwd=cwd)
         except subprocess.CalledProcessError as second_exc:
             second_error = ytdlp_error_text(second_exc)
             raise YtdlpCookieFallbackError(
@@ -186,6 +213,7 @@ def write_metadata(asset_dir: Path, metadata: dict) -> Path:
 def fetch_subtitles(url: str, platform: str, language: str, asset_dir: Path):
     with tempfile.TemporaryDirectory() as td:
         temp_dir = Path(td)
+        eprint(f"Download type: subtitles ({language})")
         cmd = [
             "yt-dlp",
             "--write-subs",
@@ -232,15 +260,17 @@ def fetch_subtitles(url: str, platform: str, language: str, asset_dir: Path):
 
 def download_audio(url: str, platform: str, asset_dir: Path) -> Path:
     outtmpl = str(asset_dir / "audio.%(ext)s")
+    eprint("Download type: audio")
     cmd = [
         "yt-dlp",
+        "--newline",
         "-f", "bestaudio/best",
         "-o", outtmpl,
         *platform_headers(platform),
         url,
     ]
     try:
-        run_ytdlp_with_cookie_fallback(cmd, cwd=asset_dir)
+        run_ytdlp_with_cookie_fallback(cmd, cwd=asset_dir, stream_output=True)
     except subprocess.CalledProcessError as exc:
         error_msg = exc.stderr or exc.stdout or "Unknown yt-dlp error"
         raise RuntimeError(f"Failed to download audio: {error_msg.strip()}") from exc

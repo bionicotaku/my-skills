@@ -11,52 +11,50 @@ description: 使用 AssemblyAI 转写本地音频文件，并将结果保存为 
 
 在以下情况下使用这个 skill：
 
-- 本地没有可用字幕
 - 你需要为某个音频文件使用托管语音转文本服务
-- 你想替代旧的 Whisper API 上传流程
 
 ## 用法
 
 基本用法：
 
 ```bash
-pythonv {baseDir}/scripts/transcribe.py /path/to/audio.m4a
+python {baseDir}/scripts/transcribe.py /path/to/audio.m4a
 ```
 
 保存到指定文件：
 
 ```bash
-pythonv {baseDir}/scripts/transcribe.py /path/to/audio.m4a --save /tmp/transcript.md
+python {baseDir}/scripts/transcribe.py /path/to/audio.m4a --save /tmp/transcript.md
 ```
 
 保持默认文件名规则，但改为保存到其他目录：
 
 ```bash
-pythonv {baseDir}/scripts/transcribe.py /path/to/audio.m4a --out-dir /tmp
+python {baseDir}/scripts/transcribe.py /path/to/audio.m4a --out-dir /tmp
 ```
 
 仅覆盖输出文件名：
 
 ```bash
-pythonv {baseDir}/scripts/transcribe.py /path/to/audio.m4a --name meeting-notes
+python {baseDir}/scripts/transcribe.py /path/to/audio.m4a --name meeting-notes
 ```
 
 控制轮询间隔：
 
 ```bash
-pythonv {baseDir}/scripts/transcribe.py /path/to/audio.m4a --interval 3
+python {baseDir}/scripts/transcribe.py /path/to/audio.m4a --interval 3
 ```
 
 批处理整个目录：
 
 ```bash
-pythonv {baseDir}/scripts/transcribe_batch.py --source-dir /path/to/input --target-dir /path/to/output
+python {baseDir}/scripts/transcribe_batch.py --source-dir /path/to/input --target-dir /path/to/output
 ```
 
 先安装依赖：
 
 ```bash
-pipv install -r {baseDir}/requirements.txt
+pip install -r {baseDir}/requirements.txt
 ```
 
 ## 输出行为

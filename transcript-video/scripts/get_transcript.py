@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import argparse
 import json
 import re
@@ -11,6 +11,41 @@ from urllib.parse import urlparse
 
 
 DEFAULT_WORK_DIR = Path.home() / "Downloads" / "transcript-video-assets"
+SAFARI_COOKIE_ARGS = ["--cookies-from-browser", "safari"]
+YTDLP_COOKIE_RETRY_MARKERS = (
+    "sign in",
+    "login",
+    "logged in",
+    "account",
+    "cookies",
+    "cookie",
+    "captcha",
+    "bot",
+    "unusual traffic",
+    "verify",
+    "verification",
+    "forbidden",
+    "unauthorized",
+    "http error 401",
+    "http error 403",
+    "http error 412",
+    "http error 429",
+    "too many requests",
+    "需要登录",
+    "请登录",
+    "登录后",
+    "账号",
+    "验证码",
+    "验证",
+    "风控",
+    "权限",
+    "访问被拒绝",
+    "访问过于频繁",
+)
+
+
+class YtdlpCookieFallbackError(RuntimeError):
+    pass
 
 
 def detect_platform(url: str) -> str:
@@ -32,6 +67,41 @@ def slugify(value: str, max_len: int = 120) -> str:
 
 def run(cmd, cwd=None, check=True):
     return subprocess.run(cmd, cwd=cwd, check=check, capture_output=True, text=True)
+
+
+def ytdlp_error_text(exc: subprocess.CalledProcessError) -> str:
+    return (exc.stderr or exc.stdout or "Unknown yt-dlp error").strip()
+
+
+def is_cookie_retryable_ytdlp_error(error_text: str) -> bool:
+    normalized = error_text.lower()
+    return any(marker in normalized for marker in YTDLP_COOKIE_RETRY_MARKERS)
+
+
+def add_safari_cookie_args(cmd: list[str]) -> list[str]:
+    if "--cookies-from-browser" in cmd or "--cookies" in cmd:
+        return cmd
+    return [*cmd[:-1], *SAFARI_COOKIE_ARGS, cmd[-1]]
+
+
+def run_ytdlp_with_cookie_fallback(cmd: list[str], cwd=None):
+    try:
+        return run(cmd, cwd=cwd)
+    except subprocess.CalledProcessError as first_exc:
+        first_error = ytdlp_error_text(first_exc)
+        if not is_cookie_retryable_ytdlp_error(first_error):
+            raise
+
+        cookie_cmd = add_safari_cookie_args(cmd)
+        try:
+            return run(cookie_cmd, cwd=cwd)
+        except subprocess.CalledProcessError as second_exc:
+            second_error = ytdlp_error_text(second_exc)
+            raise YtdlpCookieFallbackError(
+                "yt-dlp failed, retried with Safari cookies, and still failed.\n"
+                f"First error:\n{first_error}\n\n"
+                f"Safari cookies error:\n{second_error}"
+            ) from second_exc
 
 
 def platform_headers(platform: str):
@@ -80,7 +150,7 @@ def clean_srt(content: str) -> str:
 def get_video_metadata(url: str, platform: str):
     cmd = ["yt-dlp", "--dump-single-json", "--no-warnings", *platform_headers(platform), url]
     try:
-        result = run(cmd)
+        result = run_ytdlp_with_cookie_fallback(cmd)
         data = json.loads(result.stdout)
         return {
             "title": data.get("title") or "Untitled Video",
@@ -89,6 +159,8 @@ def get_video_metadata(url: str, platform: str):
             "duration": data.get("duration"),
             "webpage_url": data.get("webpage_url") or url,
         }
+    except YtdlpCookieFallbackError:
+        raise
     except Exception:
         return {
             "title": "Untitled Video",
@@ -126,7 +198,7 @@ def fetch_subtitles(url: str, platform: str, language: str, asset_dir: Path):
             url,
         ]
         try:
-            run(cmd, cwd=temp_dir)
+            run_ytdlp_with_cookie_fallback(cmd, cwd=temp_dir)
         except subprocess.CalledProcessError as exc:
             error_msg = (exc.stderr or exc.stdout or "").lower()
             if any(x in error_msg for x in ["unavailable", "not available", "region-restricted"]):
@@ -168,7 +240,7 @@ def download_audio(url: str, platform: str, asset_dir: Path) -> Path:
         url,
     ]
     try:
-        run(cmd, cwd=asset_dir)
+        run_ytdlp_with_cookie_fallback(cmd, cwd=asset_dir)
     except subprocess.CalledProcessError as exc:
         error_msg = exc.stderr or exc.stdout or "Unknown yt-dlp error"
         raise RuntimeError(f"Failed to download audio: {error_msg.strip()}") from exc

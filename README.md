@@ -113,6 +113,7 @@ my-skills/
   - [transcript-video/README.md](./transcript-video/README.md)
   - [transcript-video/SKILL.md](./transcript-video/SKILL.md)
   - [transcript-video/scripts/get_transcript.py](./transcript-video/scripts/get_transcript.py)
+  - [transcript-video/scripts/get_transcript_batch.py](./transcript-video/scripts/get_transcript_batch.py)
 
 ## 仓库约定
 
